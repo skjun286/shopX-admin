@@ -52,7 +52,7 @@ export async function batchRemoveCategory(ids: string[]) {
 }
 // 获取根分类
 export const rootCategories = async() => {
-  return request.get('/categories/root_list')
+  return request.get<{data: TypeCategoryOption[]}>('/categories/root_list')
 }
 // 批量设置状态
 export const batchStatus = async(status: number, ids: string[]) => {
@@ -70,4 +70,9 @@ export type TypeCategory = {
   updated_at?: string;
   created_at?: string;
   parent?: {name: string};
+}
+
+export type TypeCategoryOption = {
+  label: string;
+  value: string;
 }

@@ -52,7 +52,13 @@
     name: 'category',
     icon: 'table',
     path: '/category',
-    component: './Category',
+    component: './Category/',
+  },
+  {
+    name: 'product',
+    icon: 'table',
+    path: '/product',
+    component: './Product/',
   },
   {
     path: '/',

@@ -1,32 +1,42 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Modal } from 'antd'
 import {
   ProFormSelect,
   ProFormText,
-  ProFormTextArea,
+  ProFormSwitch,
   StepsForm,
-  ProFormRadio,
-  ProFormDateTimePicker,
+  ProFormMoney,
+  ProFormTextArea,
 } from '@ant-design/pro-form'
-import { useIntl, FormattedMessage } from 'umi'
-import { TypeCategory } from '@/services/category'
+
+import { getProductionDescription, TypeProduct } from '@/services/product'
 
 export type FormValueType = {
   name?: string
   parent_id?: number
   order?: number
   is_enabled?: number
-} & Partial<TypeCategory>
+} & Partial<TypeProduct>
 
 export type UpdateFormProps = {
   onCancel: (flag?: boolean, formVals?: FormValueType) => void
   onSubmit: (values: FormValueType) => Promise<void>
   updateModalVisible: boolean
-  values: Partial<TypeCategory>
+  values: Partial<TypeProduct>
+  categoryEnum: {}
 }
 
 const UpdateForm: React.FC<UpdateFormProps> = (props) => {
-  const intl = useIntl()
+  const categoryEnum = props.categoryEnum
+  const [description, setDescription] = useState('')
+  useEffect(() => {
+    (async () => {
+      const res = await getProductionDescription(props.values.id!)
+      console.log(res)
+      setDescription(res.data)
+    })()
+
+  }, [])
   return (
     <StepsForm
       stepsProps={{
@@ -38,10 +48,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             width={640}
             bodyStyle={{ padding: '32px 40px 48px' }}
             destroyOnClose
-            title={intl.formatMessage({
-              id: 'pages.searchTable.updateForm.ruleConfig',
-              defaultMessage: '规则配置',
-            })}
+            title='修改产品'
             visible={props.updateModalVisible}
             footer={submitter}
             onCancel={() => {
@@ -55,152 +62,71 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       onFinish={props.onSubmit}
     >
       <StepsForm.StepForm
+        title='产品基本信息'
         initialValues={{
+          id: props.values.id,
           name: props.values.name,
+          price: props.values.price,
           order: props.values.order,
+          is_featured: props.values.is_featured,
+          is_enabled: props.values.is_enabled,
         }}
-        title={intl.formatMessage({
-          id: 'pages.searchTable.updateForm.basicConfig',
-          defaultMessage: '基本信息',
-        })}
       >
         <ProFormText
+          label='名称'
           name="name"
-          label={intl.formatMessage({
-            id: 'pages.searchTable.updateForm.ruleName.nameLabel',
-            defaultMessage: '规则名称',
-          })}
           width="md"
           rules={[
             {
               required: true,
-              message: (
-                <FormattedMessage
-                  id="pages.searchTable.updateForm.ruleName.nameRules"
-                  defaultMessage="请输入规则名称！"
-                />
-              ),
+              message: '必填',
             },
           ]}
         />
+        <ProFormMoney
+          label='价格'
+          name="price"
+          width="md"
+          rules={[
+            {
+              required: true,
+              message: '必填',
+            },
+          ]}
+        />
+        <ProFormSelect
+          label="所属分类"
+          showSearch
+          name="category_id"
+          valueEnum={categoryEnum}
+        />
+        <ProFormText
+          label='排序值'
+          name="order"
+          width="md"
+          rules={[
+            {
+              required: true,
+              message: '必填',
+            },
+          ]}
+        />
+        <ProFormText hidden name="id" />
+        <ProFormSwitch name="is_featured" label="是否推荐" />
+        <ProFormSwitch name="is_enabled" label="是否有效" />
+      </StepsForm.StepForm>
+      <StepsForm.StepForm
+        initialValues={{ description, id: props.values.id }}
+        title='产品描述'
+      >
         <ProFormTextArea
-          name="desc"
-          width="md"
-          label={intl.formatMessage({
-            id: 'pages.searchTable.updateForm.ruleDesc.descLabel',
-            defaultMessage: '规则描述',
-          })}
-          placeholder={intl.formatMessage({
-            id: 'pages.searchTable.updateForm.ruleDesc.descPlaceholder',
-            defaultMessage: '请输入至少五个字符',
-          })}
-          rules={[
-            {
-              required: true,
-              message: (
-                <FormattedMessage
-                  id="pages.searchTable.updateForm.ruleDesc.descRules"
-                  defaultMessage="请输入至少五个字符的规则描述！"
-                />
-              ),
-              min: 5,
-            },
-          ]}
+          name="description"
+          label="描述"
+          placeholder="请输入描述"
         />
-      </StepsForm.StepForm>
-      <StepsForm.StepForm
-        initialValues={{
-          target: '0',
-          template: '0',
-        }}
-        title={intl.formatMessage({
-          id: 'pages.searchTable.updateForm.ruleProps.title',
-          defaultMessage: '配置规则属性',
-        })}
-      >
-        <ProFormSelect
-          name="target"
-          width="md"
-          label={intl.formatMessage({
-            id: 'pages.searchTable.updateForm.object',
-            defaultMessage: '监控对象',
-          })}
-          valueEnum={{
-            0: '表一',
-            1: '表二',
-          }}
-        />
-        <ProFormSelect
-          name="template"
-          width="md"
-          label={intl.formatMessage({
-            id: 'pages.searchTable.updateForm.ruleProps.templateLabel',
-            defaultMessage: '规则模板',
-          })}
-          valueEnum={{
-            0: '规则模板一',
-            1: '规则模板二',
-          }}
-        />
-        <ProFormRadio.Group
-          name="type"
-          label={intl.formatMessage({
-            id: 'pages.searchTable.updateForm.ruleProps.typeLabel',
-            defaultMessage: '规则类型',
-          })}
-          options={[
-            {
-              value: '0',
-              label: '强',
-            },
-            {
-              value: '1',
-              label: '弱',
-            },
-          ]}
-        />
-      </StepsForm.StepForm>
-      <StepsForm.StepForm
-        initialValues={{
-          type: '1',
-          frequency: 'month',
-        }}
-        title={intl.formatMessage({
-          id: 'pages.searchTable.updateForm.schedulingPeriod.title',
-          defaultMessage: '设定调度周期',
-        })}
-      >
-        <ProFormDateTimePicker
-          name="time"
-          width="md"
-          label={intl.formatMessage({
-            id: 'pages.searchTable.updateForm.schedulingPeriod.timeLabel',
-            defaultMessage: '开始时间',
-          })}
-          rules={[
-            {
-              required: true,
-              message: (
-                <FormattedMessage
-                  id="pages.searchTable.updateForm.schedulingPeriod.timeRules"
-                  defaultMessage="请选择开始时间！"
-                />
-              ),
-            },
-          ]}
-        />
-        <ProFormSelect
-          name="frequency"
-          label={intl.formatMessage({
-            id: 'pages.searchTable.updateForm.object',
-            defaultMessage: '监控对象',
-          })}
-          width="md"
-          valueEnum={{
-            month: '月',
-            week: '周',
-          }}
-        />
+        <ProFormText hidden name="id" />
+
+
       </StepsForm.StepForm>
     </StepsForm>
   )

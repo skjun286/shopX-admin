@@ -1,34 +1,41 @@
 import { PlusOutlined } from '@ant-design/icons'
-import { Button, message, FormInstance } from 'antd'
+import { Button, message } from 'antd'
 import React, { useState, useRef, useEffect } from 'react'
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout'
 import type { ProColumns, ActionType } from '@ant-design/pro-table'
 import ProTable from '@ant-design/pro-table'
-import { ModalForm, ProFormText, ProFormSwitch, ProFormSelect } from '@ant-design/pro-form'
 import {
-  listCategory, createCategory, updateCategory,
-  batchRemoveCategory, batchStatus,
-  removeCategory,
-  rootCategories, TypeCategory, TypeCategoryOption
-} from '@/services/category'
+  listProduct, createProduct, updateProduct,
+  batchRemoveProduct, batchStatus,
+  removeProduct,
+  TypeProduct
+} from '@/services/product'
+import { listCategory } from '@/services/category'
+import CreateForm from './CreateForm'
+import EditForm from './EditForm'
+import './index.less'
 
-export type FormValueType = {
-  name?: string
-  parent_id?: number
-  order?: number
-  is_enabled?: number
-} & Partial<TypeCategory>
+type FormValueType = {
+  is_featured?: boolean
+  is_enabled?: boolean
+  description_html?: string
+  description_raw?: string
+} & Partial<TypeProduct>
 
+export type descriptionT = {
+  raw: string
+  html: string
+}
 
 /**
  * @en-US Add node
  * @zh-CN 添加节点
  * @param fields
  */
-const handleAdd = async (fields: TypeCategory) => {
+const handleAdd = async (fields: TypeProduct) => {
   const hide = message.loading('正在添加')
   try {
-    await createCategory({ ...fields })
+    await createProduct({ ...fields })
     hide()
     message.success('操作成功')
     return true
@@ -48,10 +55,14 @@ const handleAdd = async (fields: TypeCategory) => {
 const handleUpdate = async (fields: FormValueType) => {
   const hide = message.loading('修改中')
   try {
-    await updateCategory(fields.id!, {
+    await updateProduct(fields.id!, {
       name: fields.name,
+      price: fields.price,
       order: fields.order,
-      parent_id: fields.parent_id,
+      description_html: fields.description_html,
+      description_raw: fields.description_raw,
+      category_id: fields.category_id,
+      is_featured: fields.is_featured,
       is_enabled: fields.is_enabled
     })
     hide()
@@ -71,12 +82,12 @@ const handleUpdate = async (fields: FormValueType) => {
  *
  * @param selectedRows
  */
-const handleRemove = async (selectedRows: TypeCategory[]) => {
+const handleRemove = async (selectedRows: TypeProduct[]) => {
   const hide = message.loading('正在删除')
   if (!selectedRows) return true
   try {
     const ids = selectedRows.map(row => row.id) as string[]
-    await batchRemoveCategory(ids)
+    await batchRemoveProduct(ids)
     hide()
     message.success('成功删除，即将刷新列表')
     return true
@@ -86,7 +97,7 @@ const handleRemove = async (selectedRows: TypeCategory[]) => {
     return false
   }
 }
-const handleBatchStatus = async (status: number, selectedRows: TypeCategory[]) => {
+const handleBatchStatus = async (status: number, selectedRows: TypeProduct[]) => {
   const hide = message.loading('正在批量设置。。。')
   if (!selectedRows) return true
   try {
@@ -103,11 +114,11 @@ const handleBatchStatus = async (status: number, selectedRows: TypeCategory[]) =
 }
 
 // 删除单个节点
-const handleRemove1 = async (row: TypeCategory) => {
+const handleRemove1 = async (row: TypeProduct) => {
   const hide = message.loading('正在删除')
 
   try {
-    await removeCategory(row.id!)
+    await removeProduct(row.id!)
     hide()
     message.success('成功删除，即将刷新列表')
     return true
@@ -123,55 +134,88 @@ const TableList: React.FC = () => {
    * @en-US Pop-up window of new window
    * @zh-CN 新建窗口的弹窗
    *  */
-  const [createModalVisible, handleModalVisible] = useState<boolean>(false)
-  const [showEditModal, setShowEditModal] = useState<boolean>(false)
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showEditForm, setShowEditForm] = useState(false)
+  const [currentRow, setCurrentRow] = useState<TypeProduct>()
+
   /**
    * @en-US The pop-up window of the distribution update window
    * @zh-CN 分布更新窗口的弹窗
    * */
 
-  const actionRef = useRef<ActionType>()
-  const createFormRef = useRef<FormInstance>()
-  const editFormRef = useRef<FormInstance>()
-  const [selectedRowsState, setSelectedRows] = useState<TypeCategory[]>([])
-  const [categoryOptions, setCategoryOptions] = useState({})
-
+  const tableRef = useRef<ActionType>()
+  const [selectedRowsState, setSelectedRows] = useState<TypeProduct[]>([])
+  const [categoryEnum, setCategoryEnum] = useState({})
+  const [description, setDescription] = useState<descriptionT>()
   useEffect(() => {
     (async () => {
-      const res = await rootCategories()
+      const res = await listCategory({ current_page: 1, per_page: 1000 })
       let options = {}
-      res.data.forEach((row: TypeCategoryOption) => {
-        options[row['value']] = row['label']
+      res.data.map(row => {
+        options[row.id] = row.name
+        // options[row.id] = { text: row.name }
       })
-      // const options = res.data.map
-      setCategoryOptions(options)
+      setCategoryEnum(options)
     })()
   }, [])
 
-  const columns: ProColumns<TypeCategory>[] = [
+  const columns: ProColumns<TypeProduct>[] = [
     {
-      title: '分类名',
+      title: '产品名称',
       dataIndex: 'name'
     },
     {
-      title: '状态',
-      dataIndex: 'is_enabled',
+      title: '价格',
+      dataIndex: 'price',
+      hideInSearch: true
+    },
+    {
+      title: '所属分类',
+      dataIndex: 'category_id',
+      valueEnum: categoryEnum,
+      render: (_, record) => <span>{record.category !== null ? record.category?.name : ''}</span>
+    },
+    {
+      title: '特价',
+      dataIndex: 'is_special',
       valueEnum: {
         0: {
-          text: '已禁用',
+          text: '否',
           status: 'Error',
         },
         1: {
-          text: '已启用',
+          text: '是',
           status: 'Success',
         }
       },
     },
     {
-      title: '父分类',
-      dataIndex: 'parent_id',
-      valueEnum: categoryOptions,
-      render: (_, record) => <span>{record.parent !== null ? record.parent?.name : ''}</span>
+      title: '推荐',
+      dataIndex: 'is_featured',
+      valueEnum: {
+        0: {
+          text: '否',
+          status: 'Error',
+        },
+        1: {
+          text: '是',
+          status: 'Success',
+        }
+      },
+    },
+    {
+      title: '有效',
+      dataIndex: 'is_enabled',
+      valueEnum: {
+        0: {
+          text: '否',
+          status: 'Error',
+        },
+        1: {
+          text: '是',
+          status: 'Success',
+        }
+      },
     },
     {
       title: '操作',
@@ -181,8 +225,8 @@ const TableList: React.FC = () => {
         <a
           key="edit"
           onClick={() => {
-            editFormRef.current?.setFieldsValue(record)
-            setShowEditModal(true)
+            setCurrentRow(record)
+            setShowEditForm(true)
           }}
         >
           修改
@@ -191,7 +235,7 @@ const TableList: React.FC = () => {
           key="remove"
           onClick={async () => {
             await handleRemove1(record)
-            actionRef.current?.reloadAndRest?.()
+            tableRef.current?.reloadAndRest?.()
           }}
         >
           删除
@@ -202,10 +246,10 @@ const TableList: React.FC = () => {
   ]
 
   return (
-    <PageContainer>
-      <ProTable<TypeCategory, API.PageParams>
+    <PageContainer className='productPage'>
+      <ProTable<TypeProduct, API.PageParams>
         headerTitle='分类列表'
-        actionRef={actionRef}
+        actionRef={tableRef}
         rowKey="id"
         search={{
           labelWidth: 120,
@@ -216,7 +260,7 @@ const TableList: React.FC = () => {
             type="primary"
             key="primary"
             onClick={() => {
-              handleModalVisible(true)
+              setShowCreateForm(true)
             }}
           >
             <PlusOutlined /> 新增
@@ -226,7 +270,10 @@ const TableList: React.FC = () => {
         request={async (
           // 第一个参数 params 查询表单和 params 参数的结合
           // 第一个参数中一定会有 pageSize 和  current ，这两个参数是 antd 的规范
-          params: { current?: number, pageSize?: number, name?: string, is_enabled?: number, parent_id?: string }
+          params: {
+            current?: number, pageSize?: number, name?: string,
+            is_enabled?: number, category_id?: string, is_featured?: number, is_special?: number
+          }
         ) => {
           // 这里需要返回一个 Promise,在返回之前你可以进行数据转化
           // 如果需要转化参数可以在这里进行修改
@@ -236,10 +283,12 @@ const TableList: React.FC = () => {
             per_page: params.pageSize,
             'filter[name]': params.name,
             'filter[is_enabled]': params.is_enabled,
-            'filter[parent_id]': params.parent_id,
-            include: 'parent',
+            'filter[is_featured]': params.is_featured,
+            'filter[is_special]': params.is_special,
+            'filter[category_id]': params.category_id,
+            include: 'category',
           }
-          const res = await listCategory(searchParams)
+          const res = await listProduct(searchParams)
           return {
             data: res.data,
             // success 请返回 true，
@@ -266,132 +315,75 @@ const TableList: React.FC = () => {
             onClick={async () => {
               await handleRemove(selectedRowsState)
               setSelectedRows([])
-              actionRef.current?.reloadAndRest?.()
+              tableRef.current?.reloadAndRest?.()
             }}
           >批量删除</Button>
           <Button type='primary'
             onClick={async () => {
               await handleBatchStatus(1, selectedRowsState)
               setSelectedRows([])
-              actionRef.current?.reloadAndRest?.()
+              tableRef.current?.reloadAndRest?.()
             }}>批量启用</Button>
           <Button type='dashed'
             onClick={async () => {
               await handleBatchStatus(0, selectedRowsState)
               setSelectedRows([])
-              actionRef.current?.reloadAndRest?.()
+              tableRef.current?.reloadAndRest?.()
             }}>批量禁用</Button>
         </FooterToolbar>
       )}
-      {/* 新增的modal表单 */}
-      <ModalForm
-        formRef={createFormRef}
-        initialValues={{ parent_id: null, order: 0, is_enabled: true }}
-        title='新增'
-        width="600px"
-        visible={createModalVisible}
-        onVisibleChange={handleModalVisible}
-        onFinish={async (value) => {
-          const success = await handleAdd(value as TypeCategory)
+
+      <CreateForm
+        categoryEnum={categoryEnum}
+        setDescription={setDescription}
+        onSubmit={async (data) => {
+          console.log('收到的desc', description)
+          const productData = { ...data, description_html: description?.html, description_raw: description?.raw }
+          const success = await handleAdd(productData as TypeProduct)
           if (success) {
-            handleModalVisible(false)
-            if (actionRef.current) {
-              actionRef.current.reload()
+            setShowCreateForm(false)
+            setCurrentRow(undefined)
+            if (tableRef.current) {
+              tableRef.current.reload()
             }
-            createFormRef.current?.resetFields()
+            return true
+          } else {
+            return false
           }
         }}
-      >
-        <ProFormText
-          label='分类名称'
-          rules={[
-            {
-              required: true,
-              message: '必填',
-            },
-          ]}
-          width="md"
-          name="name"
-        />
-        <ProFormSelect
-          showSearch
-          // todo search 改成过滤本地数据
-          name="parent_id"
-          label="父分类"
-          // todo 改成本地数据后 search改成过滤本地数据
-          request={async () => {
-            const res = await rootCategories()
-            console.log(res.data)
-            return res.data
-          }}
-        />
-        <ProFormText
-          label='分类排序值'
-          rules={[
-            {
-              required: true,
-              message: '必填',
-            },
-          ]}
-          width="md"
-          name="order"
-        />
-        <ProFormSwitch name="is_enabled" label="是否启用" />
+        onCancel={() => {
+          setShowCreateForm(false)
+          setCurrentRow(undefined)
+        }}
+        showForm={showCreateForm}
+      />
 
-      </ModalForm>
-      {/* 修改的modal表单 */}
-      <ModalForm
-        formRef={editFormRef}
-        title='修改'
-        width="600px"
-        visible={showEditModal}
-        onVisibleChange={setShowEditModal}
-        onFinish={async (value) => {
-          const success = await handleUpdate(value)
+      <EditForm
+        categoryEnum={categoryEnum}
+        onSubmit={async (data) => {
+          console.log('父组件收到的', data)
+          const productData = { ...data, description_html: description?.html, description_raw: description?.raw }
+          const success = await handleUpdate(productData as FormValueType)
           if (success) {
-            setShowEditModal(false)
-            if (actionRef.current) {
-              actionRef.current.reload()
+            setShowEditForm(false)
+            setCurrentRow(undefined)
+            if (tableRef.current) {
+              tableRef.current.reload()
             }
-            editFormRef.current?.resetFields()
+            return true
+          } else {
+            return false
           }
         }}
-      >
-        <ProFormText
-          label='分类名称'
-          rules={[
-            {
-              required: true,
-              message: '必填',
-            },
-          ]}
-          width="md"
-          name="name"
-        />
-        <ProFormSelect
-          showSearch
-          name="parent_id"
-          label="父分类"
-          request={async () => {
-            const res = await rootCategories()
-            return res.data
-          }}
-        />
-        <ProFormText
-          label='分类排序值'
-          rules={[
-            {
-              required: true,
-              message: '必填',
-            },
-          ]}
-          width="md"
-          name="order"
-        />
-        <ProFormText hidden name="id" />
-        <ProFormSwitch name="is_enabled" label="是否启用" />
+        onCancel={() => {
+          setShowEditForm(false)
+          setCurrentRow(undefined)
+        }}
+        showForm={showEditForm}
+        values={currentRow || {}}
+        setDescription={setDescription}
+      />
 
-      </ModalForm>
 
     </PageContainer>
   )
