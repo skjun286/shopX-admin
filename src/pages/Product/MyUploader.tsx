@@ -1,6 +1,10 @@
 import { Upload, Modal } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
-import React from 'react'
+import { getItem } from '@/utils/storage'
+import { useModel } from 'umi'
+import { fileT, imageUploaderModelT } from '@/models/imageUploader'
+import { useState } from 'react'
+
 
 function getBase64(file: any) {
   return new Promise((resolve, reject) => {
@@ -11,111 +15,74 @@ function getBase64(file: any) {
   })
 }
 
-export type MyUploaderProps = {
-  onCancel: (flag?: boolean, formVals?: FormValueType) => void
-  onSubmit: (values: FormValueType) => Promise<boolean | void>
-  showForm: boolean
-  categoryEnum: {}
-  setDescription: (description: descriptionT) => void
-  previewVisible: boolean
-  previewImage: ''
-  previewTitle: ''
-  fileList: object[]
-
+type MyUploaderProps = {
+  type: 'avatar' | 'poster' | 'pics'  // 头像|主图|副图
+  max: number
+  files: fileT[]
 }
 
+const MyUploader: React.FC<MyUploaderProps> = (props) => {
+  const [previewImage, setPreviewImage] = useState('')
+  const [previewVisible, setPreviewVisible] = useState(false)
+  const [previewTitle, setPreviewTitle] = useState('')
+  // @ts-ignore
+  const model: imageUploaderModelT = useModel('imageUploader')
 
-export default class MyUploader extends React.Component {
-  state = {
-    previewVisible: false,
-    previewImage: '',
-    previewTitle: '',
-    fileList: [
-      {
-        uid: '-1',
-        name: 'image.png',
-        status: 'done',
-        url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
-      },
-      {
-        uid: '-2',
-        name: 'image.png',
-        status: 'done',
-        url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
-      },
-      {
-        uid: '-3',
-        name: 'image.png',
-        status: 'done',
-        url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
-      },
-      {
-        uid: '-4',
-        name: 'image.png',
-        status: 'done',
-        url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
-      },
-      {
-        uid: '-xxx',
-        percent: 50,
-        name: 'image.png',
-        status: 'uploading',
-        url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
-      },
-      {
-        uid: '-5',
-        name: 'image.png',
-        status: 'error',
-      },
-    ],
-  };
-
-  handleCancel = () => this.setState({ previewVisible: false });
-
-  handlePreview = async file => {
+  const handlePreview = async (file: any) => {
     if (!file.url && !file.preview) {
       file.preview = await getBase64(file.originFileObj)
     }
-
-    this.setState({
-      previewImage: file.url || file.preview,
-      previewVisible: true,
-      previewTitle: file.name || file.url.substring(file.url.lastIndexOf('/') + 1),
-    })
-  };
-
-  handleChange = ({ fileList }) => this.setState({ fileList });
-
-  render() {
-    const { previewVisible, previewImage, fileList, previewTitle } = this.state
-    const uploadButton = (
-      <div>
-        <PlusOutlined />
-        <div style={{ marginTop: 9 }}>Upload</div>
-      </div>
-    )
-    return (
-      <>
-        <Upload
-          action="http://shop-x.zjy/api/back/asdf"
-          listType="picture-card"
-          fileList={fileList}
-          onPreview={this.handlePreview}
-          onChange={this.handleChange}
-          accept=''
-        >
-          {fileList.length >= 8 ? null : uploadButton}
-        </Upload>
-        <Modal
-          visible={previewVisible}
-          title={previewTitle}
-          footer={null}
-          onCancel={this.handleCancel}
-        >
-          <img alt="example" style={{ width: '100%' }} src={previewImage} />
-        </Modal>
-      </>
-    )
+    setPreviewImage(file.url || file.preview)
+    setPreviewVisible(true)
+    setPreviewTitle(file.name || file.url.substring(file.url.lastIndexOf('/') + 1))
   }
+
+  const handleChange = ({ fileList }: { fileList: any }) => {
+    if (type === 'poster') {
+      model.updatePosterFiles(fileList)
+    } else {
+      model.updatePicsFiles(fileList)
+    }
+
+  }
+
+  const token = getItem('token') as Token
+  const { type, max } = props
+  const uploadButton = (
+    <div>
+      <PlusOutlined />
+      <div style={{ marginTop: 8 }}>选择上传</div>
+    </div>
+  )
+
+  return (
+    <>
+      <Upload
+        action="http://shop-x.zjy/api/back/tool/image"
+        headers={{ Authorization: `Bearer ${token.bearer}` }}
+        data={{ type }}
+        listType="picture-card"
+        // @ts-ignore
+        fileList={type === 'poster' ? model.posterFiles : model.picsFiles}
+        onPreview={handlePreview}
+        onChange={handleChange}
+        accept='image/*'
+      >
+        {type === 'poster' ?
+          model.posterFiles.length >= max ? null : uploadButton
+          : model.picsFiles.length >= max ? null : uploadButton
+        }
+      </Upload>
+      <Modal
+        visible={previewVisible}
+        title={previewTitle}
+        footer={null}
+        onCancel={() => setPreviewVisible(false)}
+      >
+        <img alt="example" style={{ width: '100%' }} src={previewImage} />
+      </Modal>
+    </>
+  )
 }
 
+export default MyUploader

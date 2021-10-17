@@ -1,51 +1,28 @@
 import { PlusOutlined } from '@ant-design/icons'
 import { Button, message } from 'antd'
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef } from 'react'
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout'
 import type { ProColumns, ActionType } from '@ant-design/pro-table'
 import ProTable from '@ant-design/pro-table'
 import {
-  listProduct, createProduct, updateProduct,
-  batchRemoveProduct, batchStatus,
-  removeProduct,
-  TypeProduct
-} from '@/services/product'
-import { listCategory } from '@/services/category'
-import CreateForm from './CreateForm'
+  // updateUser,
+  batchRemoveUser, batchStatus,
+  removeUser,
+  listUser,
+  TypeUser
+} from '@/services/user'
 import EditForm from './EditForm'
-import './index.less'
-import { useModel } from 'umi'
-import { imageUploaderModelT } from '@/models/imageUploader'
 
-type FormValueType = {
+/* type FormValueType = {
   is_featured?: boolean
   is_enabled?: boolean
   description_html?: string
   description_raw?: string
-} & Partial<TypeProduct>
-
+} & Partial<TypeUser>
+ */
 export type descriptionT = {
   raw: string
   html: string
-}
-
-/**
- * @en-US Add node
- * @zh-CN 添加节点
- * @param fields
- */
-const handleAdd = async (fields: TypeProduct) => {
-  const hide = message.loading('正在添加')
-  try {
-    await createProduct({ ...fields })
-    hide()
-    message.success('操作成功')
-    return true
-  } catch (error) {
-    hide()
-    message.error('操作失败，请稍后重试')
-    return false
-  }
 }
 
 /**
@@ -54,10 +31,10 @@ const handleAdd = async (fields: TypeProduct) => {
  *
  * @param fields
  */
-const handleUpdate = async (fields: FormValueType) => {
+/* const handleUpdate = async (fields: FormValueType) => {
   const hide = message.loading('修改中')
   try {
-    await updateProduct(fields.id!, {
+    await updateUser(fields.id!, {
       name: fields.name,
       price: fields.price,
       order: fields.order,
@@ -76,20 +53,19 @@ const handleUpdate = async (fields: FormValueType) => {
     message.error('操作失败，请稍后重试')
     return false
   }
-}
-
+} */
 /**
  *  Delete node
  * @zh-CN 批量删除节点
  *
  * @param selectedRows
  */
-const handleRemove = async (selectedRows: TypeProduct[]) => {
+const handleRemove = async (selectedRows: TypeUser[]) => {
   const hide = message.loading('正在删除')
   if (!selectedRows) return true
   try {
     const ids = selectedRows.map(row => row.id) as string[]
-    await batchRemoveProduct(ids)
+    await batchRemoveUser(ids)
     hide()
     message.success('成功删除，即将刷新列表')
     return true
@@ -99,7 +75,7 @@ const handleRemove = async (selectedRows: TypeProduct[]) => {
     return false
   }
 }
-const handleBatchStatus = async (status: number, selectedRows: TypeProduct[]) => {
+const handleBatchStatus = async (status: number, selectedRows: TypeUser[]) => {
   const hide = message.loading('正在批量设置。。。')
   if (!selectedRows) return true
   try {
@@ -116,11 +92,11 @@ const handleBatchStatus = async (status: number, selectedRows: TypeProduct[]) =>
 }
 
 // 删除单个节点
-const handleRemove1 = async (row: TypeProduct) => {
+const handleRemove1 = async (row: TypeUser) => {
   const hide = message.loading('正在删除')
 
   try {
-    await removeProduct(row.id!)
+    await removeUser(row.id!)
     hide()
     message.success('成功删除，即将刷新列表')
     return true
@@ -132,13 +108,8 @@ const handleRemove1 = async (row: TypeProduct) => {
 }
 
 const TableList: React.FC = () => {
-  /**
-   * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
-   *  */
-  const [showCreateForm, setShowCreateForm] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
-  const [currentRow, setCurrentRow] = useState<TypeProduct>()
+  const [currentRow, setCurrentRow] = useState<TypeUser>()
 
   /**
    * @en-US The pop-up window of the distribution update window
@@ -146,78 +117,34 @@ const TableList: React.FC = () => {
    * */
 
   const tableRef = useRef<ActionType>()
-  const [selectedRowsState, setSelectedRows] = useState<TypeProduct[]>([])
-  const [categoryEnum, setCategoryEnum] = useState({})
+  const [selectedRowsState, setSelectedRows] = useState<TypeUser[]>([])
   const [description, setDescription] = useState<descriptionT>()
-  useEffect(() => {
-    (async () => {
-      const res = await listCategory({ current_page: 1, per_page: 1000 })
-      let options = {}
-      res.data.map(row => {
-        options[row.id] = row.name
-        // options[row.id] = { text: row.name }
-      })
-      setCategoryEnum(options)
-    })()
-  }, [])
 
-  const columns: ProColumns<TypeProduct>[] = [
+  const columns: ProColumns<TypeUser>[] = [
     {
-      title: '产品名称',
-      dataIndex: 'name'
+      title: '用户昵称',
+      dataIndex: 'nickname'
     },
     {
-      title: '价格',
-      dataIndex: 'price',
-      hideInSearch: true
+      title: '手机号',
+      dataIndex: 'phone',
     },
     {
-      title: '所属分类',
-      dataIndex: 'category_id',
-      valueEnum: categoryEnum,
-      render: (_, record) => <span>{record.category !== null ? record.category?.name : ''}</span>
+      title: '姓名',
+      dataIndex: 'name',
     },
     {
-      title: '特价',
-      dataIndex: 'is_special',
+      title: '性别',
+      dataIndex: 'gender',
       valueEnum: {
-        0: {
-          text: '否',
-          status: 'Error',
-        },
-        1: {
-          text: '是',
-          status: 'Success',
-        }
+        0: '未知',
+        1: '男',
+        2: '女'
       },
     },
     {
-      title: '推荐',
-      dataIndex: 'is_featured',
-      valueEnum: {
-        0: {
-          text: '否',
-          status: 'Error',
-        },
-        1: {
-          text: '是',
-          status: 'Success',
-        }
-      },
-    },
-    {
-      title: '有效',
-      dataIndex: 'is_enabled',
-      valueEnum: {
-        0: {
-          text: '否',
-          status: 'Error',
-        },
-        1: {
-          text: '是',
-          status: 'Success',
-        }
-      },
+      title: '年龄',
+      dataIndex: 'age',
     },
     {
       title: '操作',
@@ -247,12 +174,9 @@ const TableList: React.FC = () => {
     }
   ]
 
-  // @ts-ignore
-  const { posterPath, picPaths, updatePicsFiles, updatePosterFiles } = useModel('imageUploader', (ret: imageUploaderModelT) => ({ posterPath: ret.posterPath, picPaths: ret.picPaths, updatePosterFiles: ret.updatePosterFiles, updatePicsFiles: ret.updatePicsFiles }))
-
   return (
-    <PageContainer className='productPage'>
-      <ProTable<TypeProduct, API.PageParams>
+    <PageContainer className='userPage'>
+      <ProTable<TypeUser, API.PageParams>
         headerTitle='分类列表'
         actionRef={tableRef}
         rowKey="id"
@@ -265,10 +189,10 @@ const TableList: React.FC = () => {
             type="primary"
             key="primary"
             onClick={() => {
-              setShowCreateForm(true)
+              console.log('hello')
             }}
           >
-            <PlusOutlined /> 新增
+            <PlusOutlined /> 待定
           </Button>,
         ]}
 
@@ -276,30 +200,29 @@ const TableList: React.FC = () => {
           // 第一个参数 params 查询表单和 params 参数的结合
           // 第一个参数中一定会有 pageSize 和  current ，这两个参数是 antd 的规范
           params: {
-            current?: number, pageSize?: number, name?: string,
-            is_enabled?: number, category_id?: string, is_featured?: number, is_special?: number
+            current?: number, pageSize?: number,
+            name?: string
+            nickname?: string
+            phone?: string
+            gender?: number
           }
         ) => {
           // 这里需要返回一个 Promise,在返回之前你可以进行数据转化
           // 如果需要转化参数可以在这里进行修改
-
           const searchParams = {
             page: params.current,
             per_page: params.pageSize,
             'filter[name]': params.name,
-            'filter[is_enabled]': params.is_enabled,
-            'filter[is_featured]': params.is_featured,
-            'filter[is_special]': params.is_special,
-            'filter[category_id]': params.category_id,
-            include: 'category',
+            'filter[nickname]': params.nickname,
+            'filter[phone]': params.phone,
+            'filter[gender]': params.gender,
           }
-          const res = await listProduct(searchParams)
+          const res = await listUser(searchParams)
           return {
             data: res.data,
             // success 请返回 true，
             // 不然 table 会停止解析数据，即使有数据
             success: res.success,
-            // 不传会使用 data 的长度，如果是分页一定要传
             total: res.meta.total,
           }
         }}
@@ -338,41 +261,13 @@ const TableList: React.FC = () => {
         </FooterToolbar>
       )}
 
-      <CreateForm
-        categoryEnum={categoryEnum}
-        setDescription={setDescription}
-        onSubmit={async (data) => {
-
-          const productData = { ...data, description_html: description?.html, description_raw: description?.raw, posterPath, picPaths }
-          const success = await handleAdd(productData as TypeProduct)
-          if (success) {
-            setShowCreateForm(false)
-            setCurrentRow(undefined)
-            if (tableRef.current) {
-              tableRef.current.reload()
-            }
-            updatePosterFiles([])
-            updatePicsFiles([])
-
-            return true
-          } else {
-            return false
-          }
-        }}
-        onCancel={() => {
-          setShowCreateForm(false)
-          setCurrentRow(undefined)
-        }}
-        showForm={showCreateForm}
-      />
-
       <EditForm
-        categoryEnum={categoryEnum}
         onSubmit={async (data) => {
           console.log('父组件收到的', data)
-          const productData = { ...data, description_html: description?.html, description_raw: description?.raw }
-          const success = await handleUpdate(productData as FormValueType)
-          if (success) {
+          const userData = { ...data, description_html: description?.html, description_raw: description?.raw }
+          // const success = await handleUpdate(userData as FormValueType)
+          console.log(userData)
+          /* if (success) {
             setShowEditForm(false)
             setCurrentRow(undefined)
             if (tableRef.current) {
@@ -381,7 +276,7 @@ const TableList: React.FC = () => {
             return true
           } else {
             return false
-          }
+          } */
         }}
         onCancel={() => {
           setShowEditForm(false)

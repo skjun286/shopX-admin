@@ -232,7 +232,7 @@ const TableList: React.FC = () => {
           // 如果需要转化参数可以在这里进行修改
 
           const searchParams = {
-            current_page: params.current,
+            page: params.current,
             per_page: params.pageSize,
             'filter[name]': params.name,
             'filter[is_enabled]': params.is_enabled,

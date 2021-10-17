@@ -23,6 +23,7 @@ export default {
   'menu.form.advanced-form': '高级表单',
   'menu.category': '分类管理',
   'menu.product': '产品管理',
+  'menu.users': '用户管理',
   'menu.list': '列表页',
   'menu.list.table-list': '查询表格',
   'menu.list.basic-list': '标准列表',

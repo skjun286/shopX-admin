@@ -5,7 +5,7 @@ export function setItem (name:string, value:any) {
   return window.localStorage.setItem(name, value)
 }
 
-export function getItem (name:string) {
+export function getItem (name:string):any|Token {
   let value = window.localStorage.getItem(name)
   try {
     value = JSON.parse(value as string)

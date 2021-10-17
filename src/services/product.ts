@@ -21,9 +21,20 @@ export async function listProduct(
   });
 }
 
+export type picT = {
+  id: string;
+  path: string;
+  is_poster: number;
+}
 /** 获取产品的描述 */
-export async function getProductionDescription(id:string) {
+export async function getProductDescription(id:string) {
   return request<{data: string}>('/products/description/'+id, {
+    method: 'GET'
+  });
+}
+/** 获取产品的副图 */
+export async function getProductPics(id:string) {
+  return request<{data: picT[]}>('/products/pics/'+id, {
     method: 'GET'
   });
 }
@@ -69,6 +80,7 @@ export type TypeProduct = {
   id?: string;
   name?: string;
   price?: number;
+  poster?: string;
   category_id?: number;
   special_price?: number;
   is_special?: number;

@@ -12,6 +12,7 @@
             component: './user/Login',
           },
         ],
+        
       },
       {
         component: './404',
@@ -59,6 +60,12 @@
     icon: 'table',
     path: '/product',
     component: './Product/',
+  },
+  {
+    name: 'users',
+    icon: 'UserOutlined',
+    path: '/users',
+    component: './user/index',
   },
   {
     path: '/',

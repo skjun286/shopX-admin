@@ -11,8 +11,11 @@ import {
 import BraftEditor from 'braft-editor'
 import 'braft-editor/dist/index.css'
 
-import { getProductionDescription, TypeProduct } from '@/services/product'
+import { getProductDescription, getProductPics, TypeProduct } from '@/services/product'
 import { descriptionT } from '.'
+import { useModel } from 'umi'
+import { fileT, imageUploaderModelT } from '@/models/imageUploader'
+import MyUploader from './MyUploader'
 
 export type FormValueType = {
   name?: string
@@ -37,17 +40,48 @@ const EditForm: React.FC<EditFormProps> = (props) => {
   const step1Ref = useRef<FormInstance>()
   const step2Ref = useRef<FormInstance>()
   const categoryEnum = props.categoryEnum
+  // @ts-ignore
+  const model: imageUploaderModelT = useModel('imageUploader')
   useEffect(() => {
     if (props.values.id) {
       (async () => {
-        const res = await getProductionDescription(props.values.id!)
+        const res = await getProductDescription(props.values.id!)
         setCurrent(0)
 
         step1Ref.current?.setFieldsValue(props.values)
         step2Ref.current?.setFieldsValue({ id: props.values.id })
         setEditorState(BraftEditor.createEditorState(res.data))
+        // 通过后端返回的paths设置fileList到model
+        const picsRes = await getProductPics(props.values.id!)
+        let pics: fileT[] = []
+        var poster: fileT[] = []
+        picsRes.data.forEach(pic => {
+          let arr = pic.path.split('/')
+          if (pic.is_poster === 1) {
+            poster.push({
+              url: pic.path,
+              status: 'done',
+              uid: pic.id,
+              name: arr.pop()!
+            })
+          } else {
+            pics.push({
+              url: pic.path,
+              status: 'done',
+              uid: pic.id,
+              name: arr.pop()!
+            })
+          }
+        })
+        model.updatePosterFiles(poster)
+        model.updatePicsFiles(pics)
+
       })()
 
+    }
+    return () => {
+      model.updatePosterFiles([])
+      model.updatePicsFiles([])
     }
   }, [props.values.id])
 
@@ -132,6 +166,12 @@ const EditForm: React.FC<EditFormProps> = (props) => {
             },
           ]}
         />
+        <Form.Item valuePropName='poster' name='poster' label='主图'>
+          <MyUploader type='poster' max={1} files={model.posterFiles} />
+        </Form.Item>
+        <Form.Item valuePropName='pics' name='pics' label='副图'>
+          <MyUploader type='pics' max={6} files={model.picsFiles} />
+        </Form.Item>
         <ProFormText hidden name="id" />
         <ProFormSwitch name="is_featured" label="是否推荐" />
         <ProFormSwitch name="is_enabled" label="是否有效" />
@@ -144,7 +184,7 @@ const EditForm: React.FC<EditFormProps> = (props) => {
         () => ({
           validator(_, value) {
             // console.log('dddd', value.toText())
-            if (value.toText() !== '') {
+            if (value && value.toText() !== '') {
               return Promise.resolve()
             }
             return Promise.reject(new Error('产品描述为必填'))
