@@ -8,7 +8,7 @@ import {
   listProduct, createProduct, updateProduct,
   batchRemoveProduct, batchStatus,
   removeProduct,
-  TypeProduct
+  ProductT
 } from '@/services/product'
 import { listCategory } from '@/services/category'
 import CreateForm from './CreateForm'
@@ -22,7 +22,7 @@ type FormValueType = {
   is_enabled?: boolean
   description_html?: string
   description_raw?: string
-} & Partial<TypeProduct>
+} & Partial<ProductT>
 
 export type descriptionT = {
   raw: string
@@ -34,7 +34,7 @@ export type descriptionT = {
  * @zh-CN 添加节点
  * @param fields
  */
-const handleAdd = async (fields: TypeProduct) => {
+const handleAdd = async (fields: ProductT) => {
   const hide = message.loading('正在添加')
   try {
     await createProduct({ ...fields })
@@ -84,7 +84,7 @@ const handleUpdate = async (fields: FormValueType) => {
  *
  * @param selectedRows
  */
-const handleRemove = async (selectedRows: TypeProduct[]) => {
+const handleRemove = async (selectedRows: ProductT[]) => {
   const hide = message.loading('正在删除')
   if (!selectedRows) return true
   try {
@@ -99,7 +99,7 @@ const handleRemove = async (selectedRows: TypeProduct[]) => {
     return false
   }
 }
-const handleBatchStatus = async (status: number, selectedRows: TypeProduct[]) => {
+const handleBatchStatus = async (status: number, selectedRows: ProductT[]) => {
   const hide = message.loading('正在批量设置。。。')
   if (!selectedRows) return true
   try {
@@ -116,7 +116,7 @@ const handleBatchStatus = async (status: number, selectedRows: TypeProduct[]) =>
 }
 
 // 删除单个节点
-const handleRemove1 = async (row: TypeProduct) => {
+const handleRemove1 = async (row: ProductT) => {
   const hide = message.loading('正在删除')
 
   try {
@@ -138,7 +138,7 @@ const TableList: React.FC = () => {
    *  */
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
-  const [currentRow, setCurrentRow] = useState<TypeProduct>()
+  const [currentRow, setCurrentRow] = useState<ProductT>()
 
   /**
    * @en-US The pop-up window of the distribution update window
@@ -146,7 +146,7 @@ const TableList: React.FC = () => {
    * */
 
   const tableRef = useRef<ActionType>()
-  const [selectedRowsState, setSelectedRows] = useState<TypeProduct[]>([])
+  const [selectedRowsState, setSelectedRows] = useState<ProductT[]>([])
   const [categoryEnum, setCategoryEnum] = useState({})
   const [description, setDescription] = useState<descriptionT>()
   useEffect(() => {
@@ -161,7 +161,7 @@ const TableList: React.FC = () => {
     })()
   }, [])
 
-  const columns: ProColumns<TypeProduct>[] = [
+  const columns: ProColumns<ProductT>[] = [
     {
       title: '产品名称',
       dataIndex: 'name'
@@ -252,7 +252,7 @@ const TableList: React.FC = () => {
 
   return (
     <PageContainer className='productPage'>
-      <ProTable<TypeProduct, API.PageParams>
+      <ProTable<ProductT, API.PageParams>
         headerTitle='分类列表'
         actionRef={tableRef}
         rowKey="id"
@@ -344,7 +344,7 @@ const TableList: React.FC = () => {
         onSubmit={async (data) => {
 
           const productData = { ...data, description_html: description?.html, description_raw: description?.raw, posterPath, picPaths }
-          const success = await handleAdd(productData as TypeProduct)
+          const success = await handleAdd(productData as ProductT)
           if (success) {
             setShowCreateForm(false)
             setCurrentRow(undefined)

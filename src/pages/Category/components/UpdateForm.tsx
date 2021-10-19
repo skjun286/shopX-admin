@@ -9,20 +9,20 @@ import {
   ProFormTextArea,
 } from '@ant-design/pro-form'
 
-import { getProductionDescription, TypeProduct } from '@/services/product'
+import { getProductionDescription, ProductT } from '@/services/product'
 
 export type FormValueType = {
   name?: string
   parent_id?: number
   order?: number
   is_enabled?: number
-} & Partial<TypeProduct>
+} & Partial<ProductT>
 
 export type UpdateFormProps = {
   onCancel: (flag?: boolean, formVals?: FormValueType) => void
   onSubmit: (values: FormValueType) => Promise<void>
   updateModalVisible: boolean
-  values: Partial<TypeProduct>
+  values: Partial<ProductT>
   categoryEnum: {}
 }
 

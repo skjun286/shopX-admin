@@ -57,9 +57,26 @@
   },
   {
     name: 'product',
-    icon: 'table',
+    icon: 'UnorderedListOutlined',
     path: '/product',
-    component: './Product/',
+    // component: './Product/',
+    routes: [
+      {
+        path: '/product/list',
+        name: 'list', // name会自动带上上级的name变成product.list
+        component: './product/List/',
+      },
+      {
+        path: '/product/special',
+        name: 'special',
+        component: './product/Special/',
+      }
+    ]
+  },
+  {
+    name: 'banner',
+    path: '/banner',
+    component: './Banner',
   },
   {
     name: 'users',

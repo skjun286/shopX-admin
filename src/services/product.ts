@@ -12,7 +12,7 @@ export async function listProduct(
   },
   options?: { [key: string]: any },
 ) {
-  return request<{meta:{total: number}, success:boolean, data:TypeProductList}>('/products', {
+  return request<{meta:{total: number}, success:boolean, data:ProductTList}>('/products', {
     method: 'GET',
     params: {
       ...params,
@@ -26,6 +26,47 @@ export type picT = {
   path: string;
   is_poster: number;
 }
+export type pageParamsT = {
+  current: number;
+  pageSize: number;
+}
+
+export type SpecialProductT = {
+  id?: string
+  product_id: string
+  product?: {name: string}
+  slogan: string
+  ori_price: number
+  now_price: number
+  available_from: string
+  available_to: string
+}
+// 获取特价产品
+export const listSpecialProduct = async(params:pageParamsT) => {
+  return request.get<{data:SpecialProductT[], meta:{total:number}, success:boolean}>('/products/specials', {params: {page:params.current, per_page:params.pageSize}})
+}
+// 新增特价产品
+export const createSpecialProduct = async(data:SpecialProductT) => {
+  return request.post<{data:SpecialProductT}>('/products/specials', {data})
+}
+// 更新特价产品
+export const updateSpecialProduct = async(id:string, data:{
+slogan: string
+now_price: number
+available_from: string
+available_to: string
+}) => {
+  return request.patch<{data:SpecialProductT, success: boolean}>('/products/specials/'+id, data)
+}
+// 删除特价产品
+export const removeSpecialProduct = async(id:string) => {
+  return request.delete('/products/specials/'+id)
+}
+// 批量删除特价产品
+export const batchRemoveSpecialProduct = async(ids:string[]) => {
+  return request.delete('/products/specials/batch', {data:{ids}})
+}
+
 /** 获取产品的描述 */
 export async function getProductDescription(id:string) {
   return request<{data: string}>('/products/description/'+id, {
@@ -76,7 +117,7 @@ export const batchStatus = async(status: number, ids: string[]) => {
 
 // product相关的ts定义
 
-export type TypeProduct = {
+export type ProductT = {
   id?: string;
   name?: string;
   price?: number;
@@ -92,4 +133,4 @@ export type TypeProduct = {
   category?: {name: string};
 }
 
-export type TypeProductList = TypeProduct[]
+export type ProductTList = ProductT[]

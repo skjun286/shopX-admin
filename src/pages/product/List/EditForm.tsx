@@ -11,7 +11,7 @@ import {
 import BraftEditor from 'braft-editor'
 import 'braft-editor/dist/index.css'
 
-import { getProductDescription, getProductPics, TypeProduct } from '@/services/product'
+import { getProductDescription, getProductPics, ProductT } from '@/services/product'
 import { descriptionT } from '.'
 import { useModel } from 'umi'
 import { fileT, imageUploaderModelT } from '@/models/imageUploader'
@@ -22,13 +22,13 @@ export type FormValueType = {
   parent_id?: number
   order?: number
   is_enabled?: number
-} & Partial<TypeProduct>
+} & Partial<ProductT>
 
 export type EditFormProps = {
   onCancel: (flag?: boolean, formVals?: FormValueType) => void
   onSubmit: (values: FormValueType) => Promise<boolean | void>
   showForm: boolean
-  values: Partial<TypeProduct>
+  values: Partial<ProductT>
   categoryEnum: {}
   setDescription: (description: descriptionT) => void
 }
@@ -155,6 +155,15 @@ const EditForm: React.FC<EditFormProps> = (props) => {
             { required: true, message: '必选' }
           ]}
         />
+        <Form.Item rules={[{ required: true, message: '请上传主图' }]} valuePropName='poster' name='poster' label='主图'>
+          <MyUploader type='poster' max={1} files={model.posterFiles} />
+        </Form.Item>
+        <Form.Item valuePropName='pics' name='pics' label='副图'>
+          <MyUploader type='pics' max={6} files={model.picsFiles} />
+        </Form.Item>
+        <ProFormText hidden name="id" />
+        <ProFormSwitch name="is_featured" label="是否推荐" />
+        <ProFormSwitch name="is_enabled" label="是否有效" />
         <ProFormText
           label='排序值'
           name="order"
@@ -166,15 +175,6 @@ const EditForm: React.FC<EditFormProps> = (props) => {
             },
           ]}
         />
-        <Form.Item valuePropName='poster' name='poster' label='主图'>
-          <MyUploader type='poster' max={1} files={model.posterFiles} />
-        </Form.Item>
-        <Form.Item valuePropName='pics' name='pics' label='副图'>
-          <MyUploader type='pics' max={6} files={model.picsFiles} />
-        </Form.Item>
-        <ProFormText hidden name="id" />
-        <ProFormSwitch name="is_featured" label="是否推荐" />
-        <ProFormSwitch name="is_enabled" label="是否有效" />
       </StepsForm.StepForm>
       <StepsForm.StepForm
         formRef={step2Ref}

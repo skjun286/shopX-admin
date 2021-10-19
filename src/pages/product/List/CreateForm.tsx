@@ -11,7 +11,7 @@ import {
 // 引入富文本编辑器
 import BraftEditor from 'braft-editor'
 import 'braft-editor/dist/index.css'
-import { TypeProduct } from '@/services/product'
+import { ProductT } from '@/services/product'
 import { descriptionT } from '.'
 import { useModel } from 'umi'
 import { imageUploaderModelT } from '@/models/imageUploader'
@@ -21,7 +21,7 @@ export type FormValueType = {
   parent_id?: number
   order?: number
   is_enabled?: number
-} & Partial<TypeProduct>
+} & Partial<ProductT>
 
 export type UpdateFormProps = {
   onCancel: (flag?: boolean, formVals?: FormValueType) => void
@@ -88,7 +88,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     >
       <StepsForm.StepForm
         title='产品基本信息'
-        initialValues={{ order: 0 }}
+        initialValues={{ order: 0, is_enabled: 1 }}
       >
         <ProFormText
           label='名称'
@@ -121,6 +121,15 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             { required: true, message: '必选' }
           ]}
         />
+        <Form.Item rules={[{ required: true, message: '请上传主图' }]} valuePropName='poster' name='poster' label='主图'>
+          <MyUploader type='poster' max={1} files={posterFiles} />
+        </Form.Item>
+        <Form.Item valuePropName='pics' name='pics' label='副图'>
+          <MyUploader type='pics' max={6} files={picsFiles} />
+        </Form.Item>
+
+        <ProFormSwitch name="is_featured" label="是否推荐" />
+        <ProFormSwitch name="is_enabled" label="是否有效" />
 
         <ProFormText
           label='排序值'
@@ -133,15 +142,6 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             },
           ]}
         />
-        <Form.Item valuePropName='poster' name='poster' label='主图'>
-          <MyUploader type='poster' max={1} files={posterFiles} />
-        </Form.Item>
-        <Form.Item valuePropName='pics' name='pics' label='副图'>
-          <MyUploader type='pics' max={6} files={picsFiles} />
-        </Form.Item>
-
-        <ProFormSwitch name="is_featured" label="是否推荐" />
-        <ProFormSwitch name="is_enabled" label="是否有效" />
       </StepsForm.StepForm>
       <StepsForm.StepForm
         title='产品描述'
