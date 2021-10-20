@@ -4,6 +4,7 @@
  import { refreshToken } from '@/services/user'
  import { history } from 'umi'
  import { stringify } from 'querystring'
+import { apiBase } from '@/config'
 
  const codeMessage = {
    200: '服务器成功返回请求的数据。',
@@ -137,7 +138,7 @@
  
  // 通过 extend 新建一个 umi-request 实例
  const request = extend({
-   prefix: 'http://shop-x.zjy/api/back',
+   prefix: apiBase,
    timeout: 5000,
    errorHandler // 提前对响应做异常处理
  })

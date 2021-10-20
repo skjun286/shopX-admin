@@ -4,7 +4,7 @@ import { getItem } from '@/utils/storage'
 import { useModel } from 'umi'
 import { fileT, imageUploaderModelT } from '@/models/imageUploader'
 import { useState } from 'react'
-
+import { apiBase } from '@/config'
 
 function getBase64(file: any) {
   return new Promise((resolve, reject) => {
@@ -58,7 +58,7 @@ const MyUploader: React.FC<MyUploaderProps> = (props) => {
   return (
     <>
       <Upload
-        action="http://shop-x.zjy/api/back/tool/image"
+        action={`${apiBase}/tool/image`}
         headers={{ Authorization: `Bearer ${token.bearer}` }}
         data={{ type }}
         listType="picture-card"
