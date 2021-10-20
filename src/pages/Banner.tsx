@@ -216,7 +216,6 @@ const BannerList: React.FC = () => {
             // @ts-ignore
             searchParams.sort = sortStr
           }
-          console.log(filter)
           if (filter) {
             for (const key in filter) {
               if (Object.prototype.hasOwnProperty.call(filter, key)) {

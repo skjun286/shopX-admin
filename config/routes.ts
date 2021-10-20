@@ -79,6 +79,11 @@
     component: './Banner',
   },
   {
+    name: 'coupon',
+    path: '/coupon',
+    component: './Coupon',
+  },
+  {
     name: 'users',
     icon: 'UserOutlined',
     path: '/users',

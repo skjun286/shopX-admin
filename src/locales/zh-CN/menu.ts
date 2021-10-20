@@ -24,6 +24,7 @@ export default {
   'menu.category': '分类管理',
   'menu.product': '产品管理',
   'menu.banner': '横幅广告',
+  'menu.coupon': '优惠券',
   'menu.product.list': '产品列表',
   'menu.product.special': '降价促销',
   'menu.users': '用户管理',
